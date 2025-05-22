@@ -1,2 +1,16 @@
-gradio
+gradio[oauth]
 requests
+pandas
+langchain_openai
+langchain_core
+langchain_community
+duckduckgo-search
+wikipedia
+youtube-transcript-api
+pytube
+langchain-google-community
+dotenv
+certifi
+markdownify
+requests
+datasets
