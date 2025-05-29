@@ -1,5 +1,6 @@
 import os
 import requests
+from aiohttp.web_fileresponse import extension
 from datasets import load_dataset
 from pathlib import Path
 import logging
@@ -73,30 +74,51 @@ def get_gaia_attachment(attachment_id):
 
         # If direct file download fails, try loading the dataset
         logging.info("Trying to load dataset with specific configuration...")
-        dataset = load_dataset(
-            "gaia-benchmark/GAIA",
-            "2023_all",
-            data_dir="2023",
-            split="validation",
-            trust_remote_code=True,
-            streaming=True
-        )
-
-        # Debugging: Print the type and keys of the dataset
-        logging.debug(f"Dataset type: {type(dataset)}")
-        if isinstance(dataset, dict):
-            logging.debug(f"Dataset keys: {list(dataset.keys())}")
-
-        # Get the first split from the dataset (likely 'test' or 'validation')
-        if "test" in dataset:
-            dataset_iter = dataset["test"]
-            logging.info("Using 'test' split")
-        elif "validation" in dataset:
-            dataset_iter = dataset["validation"]
-            logging.info("Using 'validation' split")
-        else:
-            dataset_iter = next(iter(dataset.values()))
-            logging.info(f"Using first available split: {next(iter(dataset.keys()))}")
+        try:
+            # Try loading the validation split directly
+            dataset_iter = load_dataset(
+                "gaia-benchmark/GAIA", 
+                "2023_all", 
+                data_dir="2023",
+                split="validation",
+                trust_remote_code=True,
+                streaming=True
+            )
+            logging.info("Successfully loaded validation split as streaming dataset")
+        except Exception as e:
+            logging.warning(f"Error loading validation split: {str(e)}")
+            try:
+                # Try loading the dataset without specifying a split
+                dataset = load_dataset(
+                    "gaia-benchmark/GAIA", 
+                    "2023_all", 
+                    data_dir="2023",
+                    trust_remote_code=True,
+                    streaming=False  # Try non-streaming first
+                )
+                
+                # Debugging: Print the type and keys of the dataset
+                logging.debug(f"Dataset type: {type(dataset)}")
+                if isinstance(dataset, dict):
+                    logging.debug(f"Dataset keys: {list(dataset.keys())}")
+                    
+                    # Get the appropriate split
+                    if "test" in dataset:
+                        dataset_iter = dataset["test"]
+                        logging.info("Using 'test' split")
+                    elif "validation" in dataset:
+                        dataset_iter = dataset["validation"]
+                        logging.info("Using 'validation' split")
+                    else:
+                        dataset_iter = next(iter(dataset.values()))
+                        logging.info(f"Using first available split: {next(iter(dataset.keys()))}")
+                else:
+                    # Dataset is already a specific split
+                    dataset_iter = dataset
+                    logging.info("Dataset is already a specific split")
+            except Exception as e2:
+                logging.error(f"Error loading dataset without split: {str(e2)}")
+                return f"Failed to load GAIA dataset: {str(e)} and {str(e2)}"
 
         # Search for the attachment in the dataset
         attachment_info = None
