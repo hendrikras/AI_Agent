@@ -50,6 +50,12 @@ Observation: the result of the action
 Thought: I now know the final answer
 Final Answer: [your response here]
 
+Important instructions:
+1. Your Final Answer should be extremely concise - provide ONLY the direct answer to the question without explanations.
+2. If asked for a specific word or phrase, give ONLY that word or phrase.
+3. Do not include phrases like "The answer is" or "According to the source" in your Final Answer.
+4. Do not include any reasoning or explanation in your Final Answer.
+
 Begin! Remember give short, precise answers and to always use the exact format above, including the 'Thought:', 'Action:', 'Action Input:', 'Observation:', and 'Final Answer:' prefixes.
 """
 
@@ -142,7 +148,6 @@ class BasicAgent:
             verbose=True,
             handle_parsing_errors=True,  # Reduced to match the system prompt
             callbacks=[handler],
-            max_iterations=3,  # Increased max iterations to match the system prompt
             return_intermediate_steps=True  # Return the intermediate steps for post-processing
         )
 
